@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Details - Simple E-commerce</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .navbar { background: #667eea; color: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: #fff; text-decoration: none; margin-right: 16px; }
+        .container { max-width: 500px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        h2 { color: #667eea; }
+        .user-details { margin-top: 24px; }
+        .user-details p { margin: 8px 0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand">Simple E-commerce</div>
+        <div>
+            <a href="home.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="orders.html">Orders</a>
+            <a href="user.html">User Details</a>
+        </div>
+    </div>
+    <div class="container">
+        <h2>User Details</h2>
+        <div class="user-details" id="userDetails"></div>
+        <button id="logoutBtn" style="margin-top:24px;padding:10px 24px;background:#b00020;color:#fff;border:none;border-radius:4px;font-size:16px;cursor:pointer;">Logout</button>
+    </div>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            document.getElementById('userDetails').innerHTML = `
+                <p><b>Username:</b> ${user.username}</p>
+                <p><b>Email:</b> ${user.email}</p>
+                <p><b>Role:</b> ${user.role}</p>
+            `;
+        } else {
+            document.getElementById('userDetails').innerHTML = '<p>Please login to view your details.</p>';
+        }
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

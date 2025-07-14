@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - Simple E-commerce</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .navbar { background: #667eea; color: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .brand { font-size: 1.5em; font-weight: bold; }
+        .navbar .user-info { font-size: 1em; }
+        .container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        h2 { color: #667eea; }
+        .cart-list { margin-top: 24px; }
+        .cart-item { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; }
+        .cart-item img { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; }
+        .cart-item-info { flex: 1; }
+        .cart-item-qty { width: 40px; }
+        .cart-total { font-size: 1.2em; margin-top: 16px; }
+        .btn { padding: 10px 24px; background: #667eea; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        .btn:hover { background: #556cd6; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand">Simple E-commerce</div>
+        <div style="display:flex;gap:24px;align-items:center;" id="navbarLinks">
+            <a href="home.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="orders.html">Orders</a>
+            <a href="cart.html">Cart</a>
+            <span class="user-info" id="userInfo"></span>
+        </div>
+    </div>
+    <div class="container">
+        <h2>My Cart</h2>
+        <div class="cart-list" id="cartList"></div>
+        <div class="cart-total" id="cartTotal"></div>
+        <button class="btn" id="proceedOrderBtn">Proceed Order</button>
+    </div>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        function updateUserInfo() {
+            if (user) {
+                document.getElementById('userInfo').innerHTML = `<a href="user.html" style="color:#fff;text-decoration:underline;">User: <b>${user.username}</b></a>`;
+            } else {
+                document.getElementById('userInfo').textContent = 'Not logged in';
+            }
+        }
+        updateUserInfo();
+        // Load cart from localStorage
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        function renderCart() {
+            let html = '';
+            let total = 0;
+            if (cart.length === 0) {
+                html = '<p>Your cart is empty.</p>';
+            } else {
+                cart.forEach(item => {
+                    total += item.price * item.quantity;
+                    html += `<div class='cart-item'>
+                        <img src='${item.image || 'https://via.placeholder.com/300x200'}' alt='${item.name}'>
+                        <div class='cart-item-info'>
+                            <b>${item.name}</b><br>
+                            $${item.price} x <input type='number' min='1' value='${item.quantity}' class='cart-item-qty' data-id='${item._id}'>
+                        </div>
+                        <button class='btn' onclick='removeFromCart("${item._id}")'>Remove</button>
+                    </div>`;
+                });
+            }
+            document.getElementById('cartList').innerHTML = html;
+            document.getElementById('cartTotal').textContent = cart.length ? `Total: $${total}` : '';
+        }
+        renderCart();
+        // Update quantity
+        document.getElementById('cartList').addEventListener('change', function(e) {
+            if (e.target.classList.contains('cart-item-qty')) {
+                const id = e.target.getAttribute('data-id');
+                const qty = parseInt(e.target.value);
+                cart = cart.map(item => item._id === id ? { ...item, quantity: qty } : item);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCart();
+            }
+        });
+        // Remove from cart
+        window.removeFromCart = function(id) {
+            cart = cart.filter(item => item._id !== id);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            renderCart();
+        }
+        // Proceed order
+        document.getElementById('proceedOrderBtn').addEventListener('click', async function() {
+            if (!user) {
+                alert('Please login to place an order.');
+                return;
+            }
+            if (cart.length === 0) {
+                alert('Your cart is empty.');
+                return;
+            }
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ items: cart })
+                });
+                let data = {};
+                if (res.headers.get('content-type') && res.headers.get('content-type').includes('application/json')) {
+                    data = await res.json();
+                }
+                if (!res.ok) {
+                    alert((data && data.error) || 'Failed to place order.');
+                } else {
+                    alert('Order placed successfully!');
+                    localStorage.removeItem('cart');
+                    window.location.href = 'orders.html';
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    </script>
+</body>
+</html>

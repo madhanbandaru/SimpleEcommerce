@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - Simple E-commerce</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .navbar { background: #667eea; color: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .brand { font-size: 1.5em; font-weight: bold; }
+        .navbar .user-info { font-size: 1em; }
+        .container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        .product-main { display: flex; gap: 32px; }
+        .product-img { width: 300px; height: 220px; object-fit: cover; border-radius: 8px; }
+        .product-info { flex: 1; }
+        .suggested { margin-top: 40px; }
+        .suggested-list { display: flex; gap: 16px; flex-wrap: wrap; }
+        .suggested-card { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 12px; width: 160px; box-sizing: border-box; cursor:pointer; }
+        .suggested-card img { width: 100%; height: 80px; object-fit: cover; border-radius: 6px 6px 0 0; }
+        .suggested-card h4 { margin: 8px 0 4px 0; font-size: 1em; color: #333; }
+        .suggested-card p { margin: 0; color: #555; font-size: 0.95em; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand">Simple E-commerce</div>
+        <div style="display:flex;gap:24px;align-items:center;" id="navbarLinks">
+            <a href="home.html" style="color:#fff;text-decoration:none;margin-right:12px;">Home</a>
+            <a href="products.html" style="color:#fff;text-decoration:none;margin-right:12px;">Products</a>
+            <a href="orders.html" style="color:#fff;text-decoration:none;margin-right:12px;">Orders</a>
+            <span class="user-info" id="userInfo"></span>
+        </div>
+    </div>
+    <div class="container">
+        <div id="productDetails"></div>
+        <div class="suggested" id="suggestedSection" style="display:none;">
+            <h3>Suggested Products</h3>
+            <div class="suggested-list" id="suggestedList"></div>
+        </div>
+    </div>
+    <script>
+        // Show user name as a link to user.html
+        const user = JSON.parse(localStorage.getItem('user'));
+        function updateUserInfo() {
+            if (user) {
+                document.getElementById('userInfo').innerHTML = `<a href="user.html" style="color:#fff;text-decoration:underline;">User: <b>${user.username}</b></a>`;
+            } else {
+                document.getElementById('userInfo').textContent = 'Not logged in';
+            }
+        }
+        updateUserInfo();
+        // Get product id from query string
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+        async function loadProduct() {
+            if (!productId) {
+                document.getElementById('productDetails').innerHTML = '<p style="color:#b00020;font-size:1.2em;">Sorry, this product could not be found.</p>';
+                document.getElementById('suggestedSection').style.display = 'none';
+                return;
+            }
+            try {
+                const res = await fetch(`/api/products/${productId}`);
+                const data = await res.json();
+                if (!data || !data.product) {
+                    document.getElementById('productDetails').innerHTML = '<p style="color:#b00020;font-size:1.2em;">Sorry, this product could not be found.</p>';
+                    document.getElementById('suggestedSection').style.display = 'none';
+                    return;
+                }
+                const p = data.product;
+                document.getElementById('productDetails').innerHTML = `
+                    <div class='product-main'>
+                        <img class='product-img' src='${p.image || 'https://via.placeholder.com/300x200'}' alt='${p.name}'>
+                        <div class='product-info'>
+                            <h2>${p.name}</h2>
+                            <p><b>Price:</b> $${p.price}</p>
+                            <p><b>Category:</b> ${p.category}</p>
+                            <p><b>Stock:</b> ${p.stock}</p>
+                            <p>${p.description}</p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('suggestedSection').style.display = 'block';
+                loadSuggested(p.category, p._id);
+            } catch (err) {
+                document.getElementById('productDetails').innerHTML = `<p style='color:#b00020;'>${err.message}</p>`;
+                document.getElementById('suggestedSection').style.display = 'none';
+            }
+        }
+        async function loadSuggested(category, excludeId) {
+            try {
+                const res = await fetch(`/api/products?category=${encodeURIComponent(category)}`);
+                const data = await res.json();
+                let html = '';
+                if (data.products && data.products.length > 0) {
+                    data.products.filter(prod => prod._id !== excludeId).slice(0, 4).forEach(product => {
+                        html += `<div class='suggested-card' onclick="window.location.href='product.html?id=${product._id}'">
+                            <img src='${product.image || 'https://via.placeholder.com/300x200'}' alt='${product.name}'>
+                            <h4>${product.name}</h4>
+                            <p>$${product.price}</p>
+                        </div>`;
+                    });
+                } else {
+                    html = '<p>No suggestions found.</p>';
+                }
+                document.getElementById('suggestedList').innerHTML = html;
+            } catch (err) {
+                document.getElementById('suggestedList').innerHTML = `<p style='color:#b00020;'>${err.message}</p>`;
+            }
+        }
+        loadProduct();
+    </script>
+</body>
+</html>

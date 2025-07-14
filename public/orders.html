@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - Simple E-commerce</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .navbar { background: #667eea; color: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: #fff; text-decoration: none; margin-right: 16px; }
+        .container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        h2 { color: #667eea; }
+        .orders { margin-top: 24px; }
+        .order-card { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .order-card h3 { margin: 0 0 8px 0; color: #333; }
+        .order-card p { margin: 4px 0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand">Simple E-commerce</div>
+        <div style="display:flex;gap:24px;align-items:center;" id="navbarLinks">
+            <a href="home.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="orders.html">Orders</a>
+            <span class="user-info" id="userInfo"></span>
+        </div>
+    </div>
+    <div class="container">
+        <h2>My Orders</h2>
+        <div class="orders" id="ordersList"></div>
+    </div>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        function updateUserInfo() {
+            if (user) {
+                document.getElementById('userInfo').innerHTML = `<a href="user.html" style="color:#fff;text-decoration:underline;">User: <b>${user.username}</b></a>`;
+            } else {
+                document.getElementById('userInfo').textContent = 'Not logged in';
+            }
+        }
+        updateUserInfo();
+        const token = localStorage.getItem('token');
+        async function loadOrders() {
+            if (!token) {
+                document.getElementById('ordersList').innerHTML = '<p>Please login to view your orders.</p>';
+                return;
+            }
+            try {
+                const res = await fetch('/api/orders', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                let html = '';
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(order => {
+                        html += `<div class='order-card'>
+                            <h3>Order #${order._id}</h3>
+                            <p><b>Total:</b> $${order.totalAmount}</p>
+                            <p><b>Status:</b> ${order.status}</p>
+                            <p><b>Date:</b> ${new Date(order.createdAt).toLocaleDateString()}</p>
+                            <div><b>Items:</b><ul>${order.items.map(item => `<li>${item.productId.name} x ${item.quantity} - $${item.price}</li>`).join('')}</ul></div>
+                        </div>`;
+                    });
+                } else {
+                    html = '<p>No orders found.</p>';
+                }
+                document.getElementById('ordersList').innerHTML = html;
+            } catch (err) {
+                document.getElementById('ordersList').innerHTML = `<p style='color:#b00020;'>${err.message}</p>`;
+            }
+        }
+        loadOrders();
+    </script>
+</body>
+</html>

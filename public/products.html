@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - Simple E-commerce</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .navbar { background: #667eea; color: #fff; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: #fff; text-decoration: none; margin-right: 16px; }
+        .container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        h2 { color: #667eea; }
+        .products { display: flex; flex-wrap: wrap; gap: 24px; }
+        .product-card { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 16px; width: 220px; box-sizing: border-box; }
+        .product-card h3 { margin: 0 0 8px 0; color: #333; }
+        .product-card p { margin: 4px 0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand">Simple E-commerce</div>
+        <div style="display:flex;gap:24px;align-items:center;" id="navbarLinks">
+            <a href="home.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="orders.html">Orders</a>
+            <span class="user-info" id="userInfo"></span>
+        </div>
+    </div>
+    <div class="container">
+        <h2>All Products</h2>
+        <div class="products" id="productsList"></div>
+    </div>
+    <script>
+        // Show user name as a link to user.html
+        const user = JSON.parse(localStorage.getItem('user'));
+        function updateUserInfo() {
+            if (user) {
+                document.getElementById('userInfo').innerHTML = `<a href="user.html" style="color:#fff;text-decoration:underline;">User: <b>${user.username}</b></a>`;
+            } else {
+                document.getElementById('userInfo').textContent = 'Not logged in';
+            }
+        }
+        updateUserInfo();
+        async function loadProducts() {
+            try {
+                const res = await fetch('/api/products');
+                const data = await res.json();
+                let html = '';
+                if (data.products && data.products.length > 0) {
+                    data.products.forEach(product => {
+                        html += `<div class='product-card'>
+                            <img src='${product.image || 'https://via.placeholder.com/300x200'}' alt='${product.name}' style='width:100%;height:120px;object-fit:cover;border-radius:6px 6px 0 0;margin-bottom:8px;'>
+                            <h3>${product.name}</h3>
+                            <p><b>Price:</b> $${product.price}</p>
+                            <p><b>Category:</b> ${product.category}</p>
+                            <p><b>Stock:</b> ${product.stock}</p>
+                            <p>${product.description}</p>
+                        </div>`;
+                    });
+                } else {
+                    html = '<p>No products found.</p>';
+                }
+                document.getElementById('productsList').innerHTML = html;
+            } catch (err) {
+                document.getElementById('productsList').innerHTML = `<p style='color:#b00020;'>${err.message}</p>`;
+            }
+        }
+        loadProducts();
+    </script>
+</body>
+</html>
