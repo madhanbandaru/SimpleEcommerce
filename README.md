@@ -47,7 +47,7 @@ project-root/
 3. **Configure environment variables**
    - Create a `.env` file in the root directory:
      ```env
-     MONGODB_URI=mongodb://localhost:27017/simple-ecommerce
+     MONGODB_URI=mongodb://localhost:27017/secommerce
      JWT_SECRET=your-secret-key
      PORT=5000
      ```
